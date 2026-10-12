@@ -324,6 +324,6 @@ Expect: only loan 2, with `"due_date"` three days before TODAY, `"returned_date"
 
 **38. POST /loans/2/return**
 
-Expect: `{"id": 2, "student_id": "2026-0001", "student_name": "Ana M. Cruz", "book_id": 2, "book_title": "The Pragmatic Programmer", "borrowed_date": "TODAY", "due_date": "TODAY-3", "returned_date": "TODAY", "fine": 15, "is_overdue": false}`
+Expect: ``json{"id": 2, "student_id": "2026-0001", "student_name": "Ana M. Cruz", "book_id": 2, "book_title": "The Pragmatic Programmer", "borrowed_date": "TODAY", "due_date": "TODAY-3", "returned_date": "TODAY", "fine": 15, "is_overdue": false}``
 
 The fine is 3 days late times 5 pesos. `GET /books/2` now shows `"available_copies": 1`.
