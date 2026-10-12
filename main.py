@@ -1,56 +1,36 @@
-"""Create the FastAPI app and connect its route modules."""
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
-from app.database import database_connection, initialize_database
-from app.models import Student, StudentInput
+from app.database import database
+from app.exceptions import BusinessRuleError, NotFoundError
+from app.routers import books, loans, students
 
-app = FastAPI(title="Beginner Student API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    database.create_schema()
+    yield
+
+
+app = FastAPI(title="Library Book Borrowing System", version="casper", lifespan=lifespan)
+
+app.include_router(books.router)
+app.include_router(students.router)
+app.include_router(loans.router)
+
+
+@app.exception_handler(NotFoundError)
+async def handle_not_found(request: Request, exc: NotFoundError):
+    return JSONResponse(status_code=404, content={"detail": str(exc)})
+
+
+@app.exception_handler(BusinessRuleError)
+async def handle_business_rule(request: Request, exc: BusinessRuleError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
 @app.get("/")
-def home():
-    return {"message": "Welcome! Visit /docs to try the API."}
-
-
-@app.get("/students")
-def get_students():
-    result = Student.list_students(database_connection=database_connection)
-    return {"students": result}
-
-
-@app.get("/students/{student_id}")
-def get_student(student_id: int):
-    result = Student.get_student(
-        student_id=student_id, database_connection=database_connection
-    )
-    return {"student": result}
-
-
-@app.post("/student")
-def create_student(student: StudentInput):
-    result = Student.create_student(
-        student_input=student, database_connection=database_connection
-    )
-    return {"student": result}
-
-
-@app.put("/student/{student_id}")
-def edit_student(student_id: int, student: Student):
-    result = Student.update_student(
-        student_id=student_id,
-        student_input=student,
-        database_connection=database_connection,
-    )
-    return {"student": result}
-
-
-@app.delete("/student/{student_id}")
-def delete_student(student_id: int):
-    Student.delete_student(
-        student_id=student_id, database_connection=database_connection
-    )
-    return {"message": "Student deleted successfully"}
-
-
-initialize_database()
+def read_root():
+    return {"message": "Welcome to the Library Book Borrowing System API"}
